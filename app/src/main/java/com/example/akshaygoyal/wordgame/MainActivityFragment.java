@@ -322,7 +322,6 @@ public class MainActivityFragment extends Fragment {
             if (answersList.contains(mAnswer.getText().toString().trim())) {
                 score = score + 10;
                 Toast.makeText(getActivity(), "Correct", Toast.LENGTH_SHORT).show();
-                sharedPreferences.edit().putInt("count", ++count).apply();
                 hintCount = 0;
                 sharedPreferences.edit().putInt("count", ++count).apply();
                 sharedPreferences.edit().putInt("current_score", score).apply();
