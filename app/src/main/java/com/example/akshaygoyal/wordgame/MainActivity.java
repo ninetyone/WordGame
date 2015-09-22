@@ -7,10 +7,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MainActivityFragment.OnGameClearedListener {
 
-    public static final String MY_PREFS = "MyPrefs" ;
+    public static final String MY_PREFS = "MyPrefs";
     SharedPreferences sharedPreferences;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -18,17 +19,20 @@ public class MainActivity extends AppCompatActivity {
         if (!sharedPreferences.contains("count")) {
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putInt("count", 1);
-            editor.commit();
+            editor.apply();
         }
         if (!sharedPreferences.contains("last_updated_row")) {
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putInt("last_updated_row", 1);
             editor.commit();
         }
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, new MainActivityFragment(), "Game Fragment")
+                .commit();
         setContentView(R.layout.activity_main);
 
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -50,5 +54,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onGameCleared(boolean next) {
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.container, new MainActivityFragment(), "Game Fragment")
+                .commit();
     }
 }

@@ -116,12 +116,12 @@ public class FetchWordInfo extends AsyncTask<Void, Void, Void> {
                 String rawStr;
                 if (relationType.equals(KEY_SYNONYM)) {
                     rawStr = wordJSONObject.getString(KEY_WORDS);
-                    rawStr.replaceAll("[\\[\\]\"]", "");
+                    rawStr = rawStr.replaceAll("[\\[\\]\"]", "");
                     synonyms += rawStr;
                 }
                 if (relationType.equals(KEY_ANTONYM)) {
                     rawStr = wordJSONObject.getString(KEY_WORDS);
-                    rawStr.replaceAll("[\\[\\]\"]", "");
+                    rawStr = rawStr.replaceAll("[\\[\\]\"]", "");
                     antonyms += rawStr;
                 }
 

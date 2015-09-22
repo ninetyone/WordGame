@@ -1,16 +1,19 @@
 package com.example.akshaygoyal.wordgame;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,7 +32,7 @@ public class MainActivityFragment extends Fragment {
     private final String SYNONYM = "Synonym";
     private final String ANTONYM = "Antonym";
     private final String DEFINITION = "Definiton";
-
+    OnGameClearedListener mListener;
 
     private static final String[] WORDS_COLUMNS = {
 
@@ -42,6 +45,10 @@ public class MainActivityFragment extends Fragment {
             WordsContract.WordsEntry.COLUMN_HINTS
     };
 
+    public interface OnGameClearedListener {
+        public void onGameCleared(boolean next);
+    }
+
     static final int COL_ID = 0;
     static final int COL_WORD_ID = 1;
     static final int COL_WORD = 2;
@@ -52,12 +59,9 @@ public class MainActivityFragment extends Fragment {
     static int count;
     static int hintCount = 0;
     EditText mAnswer;
-    TextView mQuestion;
-    TextView mHint1;
-    TextView mHint2;
-    TextView mHint3;
-    ImageButton mSubmit;
-    ImageButton mHint;
+    TextView mQuestion, mHint1, mHint2, mHint3;
+    ImageButton mSubmit, mHint;
+    ImageView hintRemaining1, hintRemaining2, hintRemaining3;
 
     SharedPreferences sharedPreferences;
 
@@ -78,6 +82,9 @@ public class MainActivityFragment extends Fragment {
         mAnswer = (EditText) rootView.findViewById(R.id.answer);
         mSubmit = (ImageButton) rootView.findViewById(R.id.submit);
         mHint = (ImageButton) rootView.findViewById(R.id.hint_btn);
+        hintRemaining1 = (ImageView) rootView.findViewById(R.id.hint_remaining_1);
+        hintRemaining2 = (ImageView) rootView.findViewById(R.id.hint_remaining_2);
+        hintRemaining3 = (ImageView) rootView.findViewById(R.id.hint_remaining_3);
 
         sharedPreferences = getActivity().getSharedPreferences(MainActivity.MY_PREFS, Context.MODE_PRIVATE);
         count = sharedPreferences.getInt("count", 1);
@@ -89,7 +96,6 @@ public class MainActivityFragment extends Fragment {
             new FetchWords(getActivity()).execute();
         else if ((cursor.getCount() - count) < 5)
             new FetchWords(getActivity()).execute();
-
 
 
         Handler handler = new Handler();
@@ -164,7 +170,8 @@ public class MainActivityFragment extends Fragment {
                     public void onClick(View v) {
                         if (answersList.contains(mAnswer.getText().toString().trim())) {
                             Toast.makeText(getActivity(), "Correct", Toast.LENGTH_SHORT).show();
-                            sharedPreferences.edit().putInt("count", ++count);
+                            sharedPreferences.edit().putInt("count", ++count).apply();
+                            hintCount = 0;
                             showDialog();
                         } else {
                             Toast.makeText(getActivity(), "Incorrect", Toast.LENGTH_SHORT).show();
@@ -185,6 +192,7 @@ public class MainActivityFragment extends Fragment {
                                 mHint1.setVisibility(View.VISIBLE);
                                 mHint1.setText(hintsList.get(rand));
                                 hintsList.remove(rand);
+                                hintRemaining1.setImageDrawable(getResources().getDrawable(R.drawable.hint_red));
                                 hintCount++;
                                 break;
                             case 1:
@@ -193,6 +201,7 @@ public class MainActivityFragment extends Fragment {
                                 mHint2.setVisibility(View.VISIBLE);
                                 mHint2.setText(hintsList.get(rand));
                                 hintsList.remove(rand);
+                                hintRemaining2.setImageDrawable(getResources().getDrawable(R.drawable.hint_red));
                                 hintCount++;
                                 break;
                             case 2:
@@ -201,22 +210,37 @@ public class MainActivityFragment extends Fragment {
                                 mHint3.setVisibility(View.VISIBLE);
                                 mHint3.setText(hintsList.get(rand));
                                 hintsList.remove(rand);
+                                hintRemaining3.setImageDrawable(getResources().getDrawable(R.drawable.hint_red));
                                 hintCount++;
                                 break;
                             default:
                                 Toast.makeText(getActivity(), "You are out of Hints", Toast.LENGTH_SHORT).show();
                         }
-
                     }
                 });
             }
-
         return rootView;
 
     }
 
     private void showDialog() {
-
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Correct");
+        builder.setMessage("Continue to next question?");
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mListener = (OnGameClearedListener) getActivity();
+                mListener.onGameCleared(true);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        builder.show();
     }
 
     private void populateList(Cursor cursor, String str, ArrayList arrayList) {

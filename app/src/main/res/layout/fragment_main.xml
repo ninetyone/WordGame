@@ -18,21 +18,21 @@
             android:id="@+id/guess_the_word"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginLeft="20dp"
             android:layout_marginTop="20dp"
             android:text="Guess the word"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:layout_marginLeft="20dp"/>
+            android:textAppearance="?android:attr/textAppearanceLarge"/>
 
         <TextView
+            android:id="@+id/score"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Score"
-            android:id="@+id/score"
-            android:layout_alignTop="@+id/guess_the_word"
-            android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:layout_marginRight="20dp"/>
+            android:layout_alignParentRight="true"
+            android:layout_alignTop="@+id/guess_the_word"
+            android:layout_marginRight="20dp"
+            android:text="Score"
+            android:textAppearance="?android:attr/textAppearanceLarge"/>
 
         <android.support.v7.widget.CardView
             android:id="@+id/questionView"
@@ -194,7 +194,7 @@
                             android:layout_height="20dp"
                             android:layout_gravity="center_vertical"
                             android:layout_marginRight="10dp"
-                            android:src="@drawable/hint_red"/>
+                            android:src="@drawable/hint_green"/>
 
                         <ImageView
                             android:id="@+id/hint_remaining_2"
