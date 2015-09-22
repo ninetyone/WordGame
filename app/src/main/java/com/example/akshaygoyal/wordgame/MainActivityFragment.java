@@ -85,10 +85,11 @@ public class MainActivityFragment extends Fragment {
         Cursor cursor = getActivity().getContentResolver().query(WordsContract.WordsEntry.CONTENT_URI, new String[]{
                 WordsContract.WordsEntry.COLUMN_ID}, WordsContract.WordsEntry._ID + " >= ?", new String[]{String.valueOf(count)}, WordsContract.WordsEntry._ID + " ASC");
 
-        if (cursor != null && (cursor.getCount() - count) < 5)
+        if (cursor == null)
             new FetchWords(getActivity()).execute();
-        else
+        else if ((cursor.getCount() - count) < 5)
             new FetchWords(getActivity()).execute();
+
 
 
         Handler handler = new Handler();
@@ -105,6 +106,7 @@ public class MainActivityFragment extends Fragment {
         ArrayList<String> definitionList = new ArrayList<>();
         ArrayList<String> antonymList = new ArrayList<>();
         ArrayList<String> synonymList = new ArrayList<>();
+        ArrayList<String> finalHint = new ArrayList<>();
 
 
         if (cursor != null)
