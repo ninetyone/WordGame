@@ -113,7 +113,7 @@ public class FetchWordInfo extends AsyncTask<Void, Void, Void> {
                 JSONObject wordJSONObject = relatedWordArray.getJSONObject(i);
                 String relationType = wordJSONObject.getString(KEY_TYPE);
 
-                String rawStr;
+                String rawStr = "";
                 if (relationType.equals(KEY_SYNONYM)) {
                     rawStr = wordJSONObject.getString(KEY_WORDS);
                     rawStr = rawStr.replaceAll("[\\[\\]\"]", "");
@@ -136,7 +136,7 @@ public class FetchWordInfo extends AsyncTask<Void, Void, Void> {
 
             updated = mContext.getContentResolver().update(WordsContract.WordsEntry.buildUriFromId(id), wordValues, WordsContract.WordsEntry._ID + " = ?", new String[]{String.valueOf(id)});
             mSharedPreferences = mContext.getSharedPreferences(MainActivity.MY_PREFS, Context.MODE_PRIVATE);
-            mSharedPreferences.edit().putInt("last_updated_row", ++id);
+            mSharedPreferences.edit().putInt("last_updated_row", ++id).apply();
 
             Log.i(LOG_TAG, "Entry Updated " + id);
         } catch (JSONException e) {
