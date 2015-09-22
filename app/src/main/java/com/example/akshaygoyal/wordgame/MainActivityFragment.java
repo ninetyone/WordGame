@@ -1,151 +1,251 @@
 package com.example.akshaygoyal.wordgame;
 
-import android.net.Uri;
-import android.os.AsyncTask;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.example.akshaygoyal.wordgame.data.WordsContract;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
 
+    private final String LOG_TAG = MainActivityFragment.class.getSimpleName();
+    private final String SYNONYM = "Synonym";
+    private final String ANTONYM = "Antonym";
+    private final String DEFINITION = "Definiton";
+
+
+    private static final String[] WORDS_COLUMNS = {
+
+            WordsContract.WordsEntry.TABLE_NAME + "." + WordsContract.WordsEntry._ID,
+            WordsContract.WordsEntry.COLUMN_ID,
+            WordsContract.WordsEntry.COLUMN_WORD,
+            WordsContract.WordsEntry.COLUMN_DEFINITION,
+            WordsContract.WordsEntry.COLUMN_SYNONYM,
+            WordsContract.WordsEntry.COLUMN_ANTONYM,
+            WordsContract.WordsEntry.COLUMN_HINTS
+    };
+
+    static final int COL_ID = 0;
+    static final int COL_WORD_ID = 1;
+    static final int COL_WORD = 2;
+    static final int COL_DEFINITION = 3;
+    static final int COL_SYNONYM = 4;
+    static final int COL_ANTONYM = 5;
+    static final int COL_HINTS = 6;
+    static int count;
+    static int hintCount = 0;
+    EditText mAnswer;
+    TextView mQuestion;
+    TextView mHint1;
+    TextView mHint2;
+    TextView mHint3;
+    ImageButton mSubmit;
+    ImageButton mHint;
+
+    SharedPreferences sharedPreferences;
+
     public MainActivityFragment() {
 
     }
+
+    ArrayList<String> hintsList = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        TextView question = (TextView) getActivity().findViewById(R.id.question);
-        TextView hint1 = (TextView) getActivity().findViewById(R.id.hint1);
-        TextView hint2 = (TextView) getActivity().findViewById(R.id.hint2);
-        TextView hin3 = (TextView) getActivity().findViewById(R.id.hint3);
-        EditText answer = (EditText) getActivity().findViewById(R.id.answer);
-        Button submit = (Button) getActivity().findViewById(R.id.submit);
+        mQuestion = (TextView) rootView.findViewById(R.id.question);
+        mHint1 = (TextView) rootView.findViewById(R.id.hint1);
+        mHint2 = (TextView) rootView.findViewById(R.id.hint2);
+        mHint3 = (TextView) rootView.findViewById(R.id.hint3);
+        mAnswer = (EditText) rootView.findViewById(R.id.answer);
+        mSubmit = (ImageButton) rootView.findViewById(R.id.submit);
+        mHint = (ImageButton) rootView.findViewById(R.id.hint_btn);
 
-        new FetchWords().execute();
+        sharedPreferences = getActivity().getSharedPreferences(MainActivity.MY_PREFS, Context.MODE_PRIVATE);
+        count = sharedPreferences.getInt("count", 1);
 
+        Cursor cursor = getActivity().getContentResolver().query(WordsContract.WordsEntry.CONTENT_URI, new String[]{
+                WordsContract.WordsEntry.COLUMN_ID}, WordsContract.WordsEntry._ID + " >= ?", new String[]{String.valueOf(count)}, WordsContract.WordsEntry._ID + " ASC");
+
+        if (cursor != null && (cursor.getCount() - count) < 5)
+            new FetchWords(getActivity()).execute();
+        else
+            new FetchWords(getActivity()).execute();
+
+
+        Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+
+            }
+        }, 2000);
+        cursor = getActivity().getContentResolver().query(WordsContract.WordsEntry.CONTENT_URI, WORDS_COLUMNS, WordsContract.WordsEntry._ID + " = ?", new String[]{String.valueOf(count)}, null);
+
+        String questionStr;
+        final ArrayList<String> answersList = new ArrayList<>();
+        ArrayList<String> definitionList = new ArrayList<>();
+        ArrayList<String> antonymList = new ArrayList<>();
+        ArrayList<String> synonymList = new ArrayList<>();
+
+
+        if (cursor != null)
+            if (cursor.moveToFirst()) {
+
+                answersList.add(cursor.getString(COL_WORD));
+
+                populateList(cursor, DEFINITION, definitionList);
+                populateList(cursor, SYNONYM, synonymList);
+                populateList(cursor, ANTONYM, antonymList);
+
+                if (synonymList != null)
+                    answersList.addAll(synonymList);
+
+
+                Random random = new Random();
+                int rand = 0;
+                int listRand;
+                if (antonymList.size() != 0 && synonymList.size() != 0) {
+                    rand = random.nextInt(3);
+                } else if (antonymList.size() == 0 && synonymList.size() != 0) {
+                    rand = random.nextInt(2);
+                } else if (antonymList.size() == 0 && synonymList.size() == 0) {
+                    rand = random.nextInt(1);
+                } else if (antonymList.size() != 0 && synonymList.size() == 0) {
+                    rand = random.nextInt(1);
+                }
+
+                switch (rand) {
+                    case 0:
+                        listRand = random.nextInt(definitionList.size());
+                        mQuestion.setText("Defintion: " + definitionList.get(listRand));
+                        hintsList.remove(definitionList.get(listRand));
+                        definitionList.remove(listRand);
+                        break;
+                    case 1:
+                        listRand = random.nextInt(synonymList.size());
+                        mQuestion.setText("Synonym: " + synonymList.get(listRand));
+                        hintsList.remove(synonymList.get(listRand));
+                        answersList.remove(synonymList.get(listRand));
+                        synonymList.remove(listRand);
+                        break;
+                    case 2:
+                        listRand = random.nextInt(antonymList.size());
+                        mQuestion.setText("Antonym: " + antonymList.get(listRand));
+                        hintsList.remove(antonymList.get(listRand));
+                        antonymList.remove(listRand);
+                        break;
+                    default:
+                        throw new IndexOutOfBoundsException("Case value grater than expected.");
+                }
+
+                mSubmit.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (answersList.contains(mAnswer.getText().toString().trim())) {
+                            Toast.makeText(getActivity(), "Correct", Toast.LENGTH_SHORT).show();
+                            sharedPreferences.edit().putInt("count", ++count);
+                        } else {
+                            Toast.makeText(getActivity(), "Incorrect", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+
+                mHint.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Random random = new Random();
+                        int rand;
+
+                        switch (hintCount) {
+                            case 0:
+                                rand = random.nextInt(hintsList.size());
+                                mHint1.setText(hintsList.get(rand));
+                                mHint1.setVisibility(View.VISIBLE);
+                                mHint1.setText(hintsList.get(rand));
+                                hintsList.remove(rand);
+                                hintCount++;
+                                break;
+                            case 1:
+                                rand = random.nextInt(hintsList.size());
+                                mHint2.setText(hintsList.get(rand));
+                                mHint2.setVisibility(View.VISIBLE);
+                                mHint2.setText(hintsList.get(rand));
+                                hintsList.remove(rand);
+                                hintCount++;
+                                break;
+                            case 2:
+                                rand = random.nextInt(hintsList.size());
+                                mHint3.setText(hintsList.get(rand));
+                                mHint3.setVisibility(View.VISIBLE);
+                                mHint3.setText(hintsList.get(rand));
+                                hintsList.remove(rand);
+                                hintCount++;
+                                break;
+                            default:
+                                Toast.makeText(getActivity(), "You are out of Hints", Toast.LENGTH_SHORT).show();
+                        }
+
+                    }
+                });
+            }
 
         return rootView;
 
     }
 
-    class FetchWords extends AsyncTask<Void, Void, Void> {
+    private void populateList(Cursor cursor, String str, ArrayList arrayList) {
 
-        String LOG_TAG = FetchWords.class.getSimpleName();
+        String temp;
+        String splitParam = ",";
+        int columnId = 0;
 
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-            String wordsJsonStr = null;
-            try {
-                String base_uri = "http://api.wordnik.com:80/v4/words.json/randomWords?";
-                Uri builtUri = Uri.parse(base_uri).buildUpon()
-                        .appendQueryParameter("hasDictionaryDef", "true")
-                        .appendQueryParameter("minCorpusCount", "0")
-                        .appendQueryParameter("maxCorpusCount", "-1")
-                        .appendQueryParameter("minDictionaryCount", "100")
-                        .appendQueryParameter("maxDictionaryCount", "-1")
-                        .appendQueryParameter("minLength", "5")
-                        .appendQueryParameter("maxLength", "-1")
-                        .appendQueryParameter("limit", "10")
-                        .appendQueryParameter("api_key", "a2a73e7b926c924fad7001ca3111acd55af2ffabf50eb4ae5").build();
-
-                URL url = new URL(builtUri.toString());
-
-
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-                Log.i(LOG_TAG, builtUri.toString());
-
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                wordsJsonStr = buffer.toString();
-                getWordsFromJson(wordsJsonStr);
-            }catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-                // If the code didn't successfully get the weather data, there's no point in attempting
-                // to parse it.
-                //return null;
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
-            }
-            return null;
+        if (str.equals(SYNONYM)) {
+            columnId = COL_SYNONYM;
+            splitParam = ",";
+        } else if (str.equals(ANTONYM)) {
+            columnId = COL_ANTONYM;
+            splitParam = ",";
+        } else if (str.equals(DEFINITION)) {
+            columnId = COL_DEFINITION;
+            splitParam = ";;";
         }
 
-        private void getWordsFromJson(String wordsJsonStr) throws JSONException{
+        if (!(temp = cursor.getString(columnId)).equals("")) {
+            if (temp.contains(splitParam)) {
+                int lastIndex = temp.lastIndexOf(splitParam);
+                temp = temp.substring(0, lastIndex);
+                Collections.addAll(arrayList, temp.split(splitParam));
+                hintsList.addAll(arrayList);
+            } else
+                arrayList = null;
 
-            final String KEY_WORD = "word";
-            final String KEY_ID = "id";
-
-            try {
-                JSONArray wordArray = new JSONArray(wordsJsonStr);
-                for(int i = 0; i < wordArray.length(); i++) {
-                    JSONObject wordJSONObject = wordArray.getJSONObject(i);
-                    String word = wordJSONObject.getString(KEY_WORD);
-                    int id = wordJSONObject.getInt(KEY_ID);
-                    Log.i(LOG_TAG, word);
-                }
-
-
-            }catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            }
+            /*else {
+                int lastIndex = temp.lastIndexOf(splitParam);
+                temp = temp.substring(lastIndex);
+                question.setText(str + ": " + cursor.getString(COL_ANTONYM));
+                arrayList = null;
+            }*/
         }
     }
+
+
 }

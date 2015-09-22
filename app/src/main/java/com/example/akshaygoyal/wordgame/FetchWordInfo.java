@@ -2,6 +2,7 @@ package com.example.akshaygoyal.wordgame;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -30,6 +31,7 @@ public class FetchWordInfo extends AsyncTask<Void, Void, Void> {
     String LOG_TAG = FetchWordInfo.class.getSimpleName();
     Context mContext;
     Cursor mCursor;
+    SharedPreferences mSharedPreferences;
 
 
     public FetchWordInfo(Context context, Cursor cursor) {
@@ -43,7 +45,6 @@ public class FetchWordInfo extends AsyncTask<Void, Void, Void> {
         if (mCursor != null) {
             if (mCursor.moveToFirst()) {
                 do {
-                    Log.i("ID Cursor--------", mCursor.getColumnIndex(WordsContract.WordsEntry._ID) + "");
                     int id = mCursor.getInt(0);
                     String word = mCursor.getString(2);
 
@@ -110,18 +111,18 @@ public class FetchWordInfo extends AsyncTask<Void, Void, Void> {
             for (int i = 0; i < relatedWordArray.length(); i++) {
 
                 JSONObject wordJSONObject = relatedWordArray.getJSONObject(i);
-                JSONArray jsonWordsArr = wordJSONObject.getJSONArray(KEY_WORDS);
+                String relationType = wordJSONObject.getString(KEY_TYPE);
 
-                if (wordJSONObject.getString(KEY_TYPE).equals(KEY_SYNONYM)) {
-
-                    for (int j = 0; j < jsonWordsArr.length(); j++) {
-                        synonyms += jsonWordsArr.getJSONObject(j).toString() + ";;";
-                    }
-                } else if (wordJSONObject.getString(KEY_TYPE).equals(KEY_ANTONYM)) {
-                    for (int j = 0; j < jsonWordsArr.length(); j++) {
-                        antonyms += jsonWordsArr.getJSONObject(j) + ";;";
-                    }
-
+                String rawStr;
+                if (relationType.equals(KEY_SYNONYM)) {
+                    rawStr = wordJSONObject.getString(KEY_WORDS);
+                    rawStr.replaceAll("[\\[\\]\"]", "");
+                    synonyms += rawStr;
+                }
+                if (relationType.equals(KEY_ANTONYM)) {
+                    rawStr = wordJSONObject.getString(KEY_WORDS);
+                    rawStr.replaceAll("[\\[\\]\"]", "");
+                    antonyms += rawStr;
                 }
 
             }
@@ -134,7 +135,10 @@ public class FetchWordInfo extends AsyncTask<Void, Void, Void> {
             int updated = 0;
 
             updated = mContext.getContentResolver().update(WordsContract.WordsEntry.buildUriFromId(id), wordValues, WordsContract.WordsEntry._ID + " = ?", new String[]{String.valueOf(id)});
+            mSharedPreferences = mContext.getSharedPreferences(MainActivity.MY_PREFS, Context.MODE_PRIVATE);
+            mSharedPreferences.edit().putInt("last_updated_row", ++id);
 
+            Log.i(LOG_TAG, "Entries Updated " + updated);
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
             e.printStackTrace();
