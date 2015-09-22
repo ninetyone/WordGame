@@ -18,10 +18,21 @@
             android:id="@+id/guess_the_word"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
             android:layout_marginTop="20dp"
             android:text="Guess the word"
-            android:textAppearance="?android:attr/textAppearanceLarge"/>
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_marginLeft="20dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Score"
+            android:id="@+id/score"
+            android:layout_alignTop="@+id/guess_the_word"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginRight="20dp"/>
 
         <android.support.v7.widget.CardView
             android:id="@+id/questionView"
@@ -47,7 +58,6 @@
                     android:id="@+id/question"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
                     android:text="Question"/>
 
                 <TextView
@@ -55,7 +65,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/question"
-                    android:layout_centerHorizontal="true"
                     android:layout_marginTop="15dp"
                     android:text="Hint 1"
                     android:visibility="gone"/>
@@ -65,7 +74,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/hint1"
-                    android:layout_centerHorizontal="true"
                     android:layout_marginTop="15dp"
                     android:text="Hint 2"
                     android:visibility="gone"/>
@@ -75,7 +83,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_below="@+id/hint2"
-                    android:layout_centerHorizontal="true"
                     android:layout_marginTop="15dp"
                     android:text="Hint 3"
                     android:visibility="gone"/>
@@ -209,5 +216,6 @@
             </LinearLayout>
 
         </android.support.v7.widget.CardView>
+
     </RelativeLayout>
 </ScrollView>

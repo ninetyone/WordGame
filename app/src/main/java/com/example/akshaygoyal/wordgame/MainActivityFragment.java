@@ -163,6 +163,7 @@ public class MainActivityFragment extends Fragment {
                         if (answersList.contains(mAnswer.getText().toString().trim())) {
                             Toast.makeText(getActivity(), "Correct", Toast.LENGTH_SHORT).show();
                             sharedPreferences.edit().putInt("count", ++count);
+                            showDialog();
                         } else {
                             Toast.makeText(getActivity(), "Incorrect", Toast.LENGTH_SHORT).show();
                         }
@@ -209,6 +210,10 @@ public class MainActivityFragment extends Fragment {
             }
 
         return rootView;
+
+    }
+
+    private void showDialog() {
 
     }
 
