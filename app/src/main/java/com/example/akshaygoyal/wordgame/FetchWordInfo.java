@@ -138,7 +138,7 @@ public class FetchWordInfo extends AsyncTask<Void, Void, Void> {
             mSharedPreferences = mContext.getSharedPreferences(MainActivity.MY_PREFS, Context.MODE_PRIVATE);
             mSharedPreferences.edit().putInt("last_updated_row", ++id);
 
-            Log.i(LOG_TAG, "Entries Updated " + updated);
+            Log.i(LOG_TAG, "Entry Updated " + id);
         } catch (JSONException e) {
             Log.e(LOG_TAG, e.getMessage(), e);
             e.printStackTrace();
