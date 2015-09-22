@@ -58,8 +58,12 @@ public class MainActivityFragment extends Fragment {
     static final int COL_HINTS = 6;
     static int count;
     static int hintCount = 0;
+    static int score = 20;
+    static int last_high = 20;
+    static Boolean score_flag;
+
     EditText mAnswer;
-    TextView mQuestion, mHint1, mHint2, mHint3;
+    TextView mQuestion, mHint1, mHint2, mHint3, mScore;
     ImageButton mSubmit, mHint;
     ImageView hintRemaining1, hintRemaining2, hintRemaining3;
 
@@ -85,9 +89,15 @@ public class MainActivityFragment extends Fragment {
         hintRemaining1 = (ImageView) rootView.findViewById(R.id.hint_remaining_1);
         hintRemaining2 = (ImageView) rootView.findViewById(R.id.hint_remaining_2);
         hintRemaining3 = (ImageView) rootView.findViewById(R.id.hint_remaining_3);
+        mScore = (TextView) rootView.findViewById(R.id.score);
 
         sharedPreferences = getActivity().getSharedPreferences(MainActivity.MY_PREFS, Context.MODE_PRIVATE);
         count = sharedPreferences.getInt("count", 1);
+        score = sharedPreferences.getInt("current_score", 20);
+        last_high = sharedPreferences.getInt("last_high_score", 20);
+        score_flag = sharedPreferences.getBoolean("score_flag", true);
+
+        mScore.setText("Score: " +  score + "\nHigh Score: " + last_high);
 
         Cursor cursor = getActivity().getContentResolver().query(WordsContract.WordsEntry.CONTENT_URI, new String[]{
                 WordsContract.WordsEntry.COLUMN_ID}, WordsContract.WordsEntry._ID + " >= ?", new String[]{String.valueOf(count)}, WordsContract.WordsEntry._ID + " ASC");
@@ -145,21 +155,24 @@ public class MainActivityFragment extends Fragment {
                     case 0:
                         listRand = random.nextInt(definitionList.size());
                         mQuestion.setText("Defintion: " + definitionList.get(listRand));
-                        hintsList.remove(definitionList.get(listRand));
+                        hintsList.remove(DEFINITION + ": " + definitionList.get(listRand));
                         definitionList.remove(listRand);
+                        mScore.setText("Score: " +  score + "\nHigh Score: " + last_high);
                         break;
                     case 1:
                         listRand = random.nextInt(synonymList.size());
                         mQuestion.setText("Synonym: " + synonymList.get(listRand));
-                        hintsList.remove(synonymList.get(listRand));
+                        hintsList.remove(SYNONYM + ": " + synonymList.get(listRand));
                         answersList.remove(synonymList.get(listRand));
                         synonymList.remove(listRand);
+                        mScore.setText("Score: " +  score + "\nHigh Score: " + last_high);
                         break;
                     case 2:
                         listRand = random.nextInt(antonymList.size());
                         mQuestion.setText("Antonym: " + antonymList.get(listRand));
-                        hintsList.remove(antonymList.get(listRand));
+                        hintsList.remove(ANTONYM + ": " + antonymList.get(listRand));
                         antonymList.remove(listRand);
+                        mScore.setText("Score: " +  score + "\nHigh Score: " + last_high);
                         break;
                     default:
                         throw new IndexOutOfBoundsException("Case value grater than expected.");
@@ -168,54 +181,14 @@ public class MainActivityFragment extends Fragment {
                 mSubmit.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if (answersList.contains(mAnswer.getText().toString().trim())) {
-                            Toast.makeText(getActivity(), "Correct", Toast.LENGTH_SHORT).show();
-                            sharedPreferences.edit().putInt("count", ++count).apply();
-                            hintCount = 0;
-                            showDialog();
-                        } else {
-                            Toast.makeText(getActivity(), "Incorrect", Toast.LENGTH_SHORT).show();
-                        }
+                        callSubmit(answersList);
                     }
                 });
 
                 mHint.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Random random = new Random();
-                        int rand;
-
-                        switch (hintCount) {
-                            case 0:
-                                rand = random.nextInt(hintsList.size());
-                                mHint1.setText(hintsList.get(rand));
-                                mHint1.setVisibility(View.VISIBLE);
-                                mHint1.setText(hintsList.get(rand));
-                                hintsList.remove(rand);
-                                hintRemaining1.setImageDrawable(getResources().getDrawable(R.drawable.hint_red));
-                                hintCount++;
-                                break;
-                            case 1:
-                                rand = random.nextInt(hintsList.size());
-                                mHint2.setText(hintsList.get(rand));
-                                mHint2.setVisibility(View.VISIBLE);
-                                mHint2.setText(hintsList.get(rand));
-                                hintsList.remove(rand);
-                                hintRemaining2.setImageDrawable(getResources().getDrawable(R.drawable.hint_red));
-                                hintCount++;
-                                break;
-                            case 2:
-                                rand = random.nextInt(hintsList.size());
-                                mHint3.setText(hintsList.get(rand));
-                                mHint3.setVisibility(View.VISIBLE);
-                                mHint3.setText(hintsList.get(rand));
-                                hintsList.remove(rand);
-                                hintRemaining3.setImageDrawable(getResources().getDrawable(R.drawable.hint_red));
-                                hintCount++;
-                                break;
-                            default:
-                                Toast.makeText(getActivity(), "You are out of Hints", Toast.LENGTH_SHORT).show();
-                        }
+                        callHints();
                     }
                 });
             }
@@ -223,7 +196,30 @@ public class MainActivityFragment extends Fragment {
 
     }
 
-    private void showDialog() {
+    private void showNewGameDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Game Over");
+        builder.setMessage("Start A New Game?");
+        builder.setPositiveButton("New Game", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mListener = (OnGameClearedListener) getActivity();
+                mListener.onGameCleared(true);
+                sharedPreferences.edit().putInt("current_score", 20).apply();
+
+            }
+        });
+        builder.setNegativeButton("Quit", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                getActivity().finish();
+            }
+        });
+        builder.setCancelable(false);
+        builder.show();
+    }
+
+    private void showCorrectDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Correct");
         builder.setMessage("Continue to next question?");
@@ -234,16 +230,129 @@ public class MainActivityFragment extends Fragment {
                 mListener.onGameCleared(true);
             }
         });
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton("Quit", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                getActivity().finish();
+            }
+        });
+        builder.setCancelable(false);
+        builder.show();
+    }
+
+    private void showIncorrectDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Incorrect");
+        builder.setMessage("Choose what to do?");
+        builder.setPositiveButton("Try Again!", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
             }
         });
+        builder.setNegativeButton("Quit", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                getActivity().finish();
+            }
+        });
+        builder.setNeutralButton("Get Hint", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                callHints();
+            }
+        });
+        builder.setCancelable(false);
         builder.show();
     }
 
-    private void populateList(Cursor cursor, String str, ArrayList arrayList) {
+    private void callHints() {
+
+        if (score > 0) {
+            Random random = new Random();
+            int rand;
+            switch (hintCount) {
+                case 0:
+                    rand = random.nextInt(hintsList.size());
+                    mHint1.setText(hintsList.get(rand));
+                    mHint1.setVisibility(View.VISIBLE);
+                    mHint1.setText(hintsList.get(rand));
+                    hintsList.remove(rand);
+                    hintRemaining1.setImageDrawable(getResources().getDrawable(R.drawable.hint_red));
+                    hintCount++;
+                    score--;
+                    mScore.setText("Score: " + score + "\nHigh Score: " + last_high);
+                    break;
+                case 1:
+                    rand = random.nextInt(hintsList.size());
+                    mHint2.setText(hintsList.get(rand));
+                    mHint2.setVisibility(View.VISIBLE);
+                    mHint2.setText(hintsList.get(rand));
+                    hintsList.remove(rand);
+                    hintRemaining2.setImageDrawable(getResources().getDrawable(R.drawable.hint_red));
+                    hintCount++;
+                    score--;
+                    mScore.setText("Score: " + score + "\nHigh Score: " + last_high);
+                    break;
+                case 2:
+                    rand = random.nextInt(hintsList.size());
+                    mHint3.setText(hintsList.get(rand));
+                    mHint3.setVisibility(View.VISIBLE);
+                    mHint3.setText(hintsList.get(rand));
+                    hintsList.remove(rand);
+                    hintRemaining3.setImageDrawable(getResources().getDrawable(R.drawable.hint_red));
+                    hintCount++;
+                    score--;
+                    mScore.setText("Score: " + score + "\nHigh Score: " + last_high);
+                    break;
+                default:
+                    Toast.makeText(getActivity(), "You are out of Hints", Toast.LENGTH_SHORT).show();
+            }
+        }
+        else if (score == 0){
+            Toast.makeText(getActivity(), "Can't take hint at 0 score.", Toast.LENGTH_SHORT).show();
+        } else {
+            showNewGameDialog();
+        }
+    }
+
+    private void callSubmit(ArrayList<String> answersList) {
+
+        if (score >= 0) {
+            if (answersList.contains(mAnswer.getText().toString().trim())) {
+                score = score + 10;
+                Toast.makeText(getActivity(), "Correct", Toast.LENGTH_SHORT).show();
+                sharedPreferences.edit().putInt("count", ++count).apply();
+                hintCount = 0;
+                sharedPreferences.edit().putInt("count", ++count).apply();
+                sharedPreferences.edit().putInt("current_score", score).apply();
+                if (score > last_high) {
+                    last_high = score;
+                    sharedPreferences.edit().putInt("last_high_score", last_high).apply();
+                    if (score_flag) {
+                        Toast.makeText(getActivity(), "New High Score!", Toast.LENGTH_SHORT).show();
+                        sharedPreferences.edit().putBoolean("score_flag", false).apply();
+                    }
+                }
+                mScore.setText("Score: " + score + "\nHigh Score: " + last_high);
+                showCorrectDialog();
+            } else {
+                score = score - 2;
+                mScore.setText("Score: " + score + "\nHigh Score: " + last_high);
+                sharedPreferences.edit().putInt("current_score", score).apply();
+                Toast.makeText(getActivity(), "Incorrect", Toast.LENGTH_SHORT).show();
+                showIncorrectDialog();
+            }
+            if (score < 0) {
+                mScore.setText("Game Over \nHigh Score: " + last_high);
+                showNewGameDialog();
+            }
+        } else {
+            showNewGameDialog();
+        }
+    }
+
+    private void populateList(Cursor cursor, String str, ArrayList<String> arrayList) {
 
         String temp;
         String splitParam = ",";
@@ -265,17 +374,19 @@ public class MainActivityFragment extends Fragment {
                 int lastIndex = temp.lastIndexOf(splitParam);
                 temp = temp.substring(0, lastIndex);
                 Collections.addAll(arrayList, temp.split(splitParam));
-                hintsList.addAll(arrayList);
+                for (String s: arrayList) {
+                    hintsList.add(str + ": " + s);
+                }
             } else
                 arrayList = null;
-
-            /*else {
-                int lastIndex = temp.lastIndexOf(splitParam);
-                temp = temp.substring(lastIndex);
-                question.setText(str + ": " + cursor.getString(COL_ANTONYM));
-                arrayList = null;
-            }*/
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        sharedPreferences.edit().putBoolean("score_flag", true).apply();
+
     }
 
 
