@@ -5,7 +5,6 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
@@ -91,7 +90,7 @@ public class MainActivityFragment extends Fragment {
         hintRemaining3 = (ImageView) rootView.findViewById(R.id.hint_remaining_3);
         mScore = (TextView) rootView.findViewById(R.id.score);
 
-        sharedPreferences = getActivity().getSharedPreferences(MainActivity.MY_PREFS, Context.MODE_PRIVATE);
+        sharedPreferences = getActivity().getSharedPreferences(SplashActivity.MY_PREFS, Context.MODE_PRIVATE);
         count = sharedPreferences.getInt("count", 1);
         score = sharedPreferences.getInt("current_score", 20);
         last_high = sharedPreferences.getInt("last_high_score", 20);
@@ -107,14 +106,6 @@ public class MainActivityFragment extends Fragment {
         else if ((cursor.getCount() - count) < 5)
             new FetchWords(getActivity()).execute();
 
-
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-
-            }
-        }, 2000);
         cursor = getActivity().getContentResolver().query(WordsContract.WordsEntry.CONTENT_URI, WORDS_COLUMNS, WordsContract.WordsEntry._ID + " = ?", new String[]{String.valueOf(count)}, null);
 
         String questionStr;
@@ -349,6 +340,7 @@ public class MainActivityFragment extends Fragment {
         } else {
             showNewGameDialog();
         }
+        mAnswer.setText("");
     }
 
     private void populateList(Cursor cursor, String str, ArrayList<String> arrayList) {

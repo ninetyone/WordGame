@@ -146,7 +146,7 @@ class FetchWords extends AsyncTask<Void, Void, Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        SharedPreferences sharedPreferences = mContext.getSharedPreferences(MainActivity.MY_PREFS, Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = mContext.getSharedPreferences(SplashActivity.MY_PREFS, Context.MODE_PRIVATE);
         int count = sharedPreferences.getInt("last_updated_row", 1);
         Cursor cursor = mContext.getContentResolver().query(WordsContract.WordsEntry.CONTENT_URI, null, WordsContract.WordsEntry._ID + " >= ?", new String[]{String.valueOf(count)}, WordsContract.WordsEntry._ID + " ASC");
 

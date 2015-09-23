@@ -135,7 +135,7 @@ public class FetchWordInfo extends AsyncTask<Void, Void, Void> {
             int updated = 0;
 
             updated = mContext.getContentResolver().update(WordsContract.WordsEntry.buildUriFromId(id), wordValues, WordsContract.WordsEntry._ID + " = ?", new String[]{String.valueOf(id)});
-            mSharedPreferences = mContext.getSharedPreferences(MainActivity.MY_PREFS, Context.MODE_PRIVATE);
+            mSharedPreferences = mContext.getSharedPreferences(SplashActivity.MY_PREFS, Context.MODE_PRIVATE);
             mSharedPreferences.edit().putInt("last_updated_row", ++id).apply();
 
             Log.i(LOG_TAG, "Entry Updated " + id);
@@ -196,4 +196,5 @@ public class FetchWordInfo extends AsyncTask<Void, Void, Void> {
         }
         return wordInfoJsonStr;
     }
+
 }
